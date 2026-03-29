@@ -1,407 +1,243 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>苏讯新材料-lxy</title>
+    <title>SUXUN PRO - 钢铁数字孪生控制台</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://gs.jurieo.com/gemini/fonts-googleapis/css2?family=Space+Grotesk:wght@300;500;700&family=Noto+Sans+SC:wght@300;400;700&display=swap');
-
+        @import url('https://gs.jurieo.com/gemini/fonts-googleapis/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+SC:wght@300;400;900&display=swap');
+        
         body {
             font-family: 'Noto Sans SC', sans-serif;
-            background: #0f172a;
-            color: #f1f5f9;
-            overflow-x: hidden;
+            background-color: #020617;
+            color: #e2e8f0;
         }
 
-        .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        .dashboard-card {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(51, 65, 85, 0.5);
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
         }
 
-        /* 3D Coil Animation */
-        .coil-container {
-            perspective: 1000px;
+        .dashboard-card:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
         }
 
-        .coil-mesh {
-            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-            transform-style: preserve-3d;
+        .glow-text {
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
         }
 
-        /* Coating Textures */
-        .texture-base {
-            background: linear-gradient(135deg, #64748b, #334155);
+        /* 3D Coil Effect */
+        .coil-pro {
+            background: radial-gradient(circle at 30% 30%, #475569, #0f172a);
+            box-shadow: 
+                -20px -20px 60px rgba(255,255,255,0.05),
+                20px 20px 60px rgba(0,0,0,0.5);
+            position: relative;
         }
 
-        .texture-zinc {
-            background: linear-gradient(90deg, #94a3b8 0%, #cbd5e1 50%, #94a3b8 100%);
-            box-shadow: inset 0 0 40px rgba(255, 255, 255, 0.3);
+        .status-pulse {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 10px #10b981;
+            animation: pulse 2s infinite;
         }
 
-        .texture-hdp {
-            background: linear-gradient(90deg, #1e40af 0%, #3b82f6 50%, #1e40af 100%);
-        }
-
-        .texture-pvdf {
-            background: linear-gradient(90deg, #b91c1c 0%, #ef4444 50%, #b91c1c 100%);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .texture-wood {
-            background: repeating-linear-gradient(45deg, #78350f, #78350f 10px, #92400e 10px, #92400e 20px);
-        }
-
-        /* Layer Highlight */
-        .layer-active {
-            transform: scale(1.05) translateZ(20px);
-            box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
-            border-color: #3b82f6 !important;
-        }
-
-        /* Weather Effects */
-        .weather-rain::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1IiBoZWlnaHQ9IjEwIj48bGluZSB4MT0iMiIgeTE9IjAiIHgyPSIyIiB5Mj0iMTAiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjIpIiBzdHJva2Utd2lkdGg9IjEiLz48L3N2Zz4=');
-            animation: rain 0.2s linear infinite;
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        @keyframes rain {
-            to {
-                transform: translateY(10px);
-            }
-        }
-
-        .active-weather .weather-rain::after {
-            opacity: 1;
-        }
-
-        .scan-line {
-            position: absolute;
-            width: 100%;
-            height: 2px;
-            background: rgba(59, 130, 246, 0.5);
-            top: 0;
-            animation: scan 3s linear infinite;
-        }
-
-        @keyframes scan {
-            0% {
-                top: 0;
-            }
-
-            100% {
-                top: 100%;
-            }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
         }
     </style>
 </head>
+<body class="min-h-screen flex flex-col">
 
-<body class="p-0 m-0">
-
-    <!-- Top Navigation -->
-    <nav
-        class="h-20 flex items-center justify-between px-8 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
-        <div class="flex items-center gap-4">
-            <div
-                class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center font-bold text-xl italic">
-                S</div>
-            <div>
-                <h1 class="text-xl font-bold tracking-widest text-white">SUXUN TECH</h1>
-                <p class="text-[10px] text-blue-400 font-medium tracking-[0.2em]">智能涂镀工艺实验室</p>
+    <!-- Pro Navigation -->
+    <nav class="border-b border-slate-800 px-6 py-4 flex items-center justify-between bg-slate-900/50">
+        <div class="flex items-center gap-6">
+            <div class="text-2xl font-black italic tracking-tighter text-blue-500">SUXUN <span class="text-white">PRO</span></div>
+            <div class="h-6 w-[1px] bg-slate-700"></div>
+            <div class="flex items-center gap-2 text-xs font-medium text-slate-400">
+                <span class="status-pulse"></span>
+                系统运行正常: 沭阳基地 1号线
             </div>
         </div>
-        <div class="hidden lg:flex items-center gap-8">
-            <button class="text-slate-400 hover:text-white transition text-sm">数字工厂</button>
-            <button class="text-slate-400 hover:text-white transition text-sm">产品矩阵</button>
-            <button
-                class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-full text-sm font-bold transition shadow-lg shadow-blue-900/20">联系技术支持</button>
+        <div class="flex items-center gap-4">
+            <div class="bg-slate-800 px-3 py-1 rounded text-[10px] mono text-blue-400 border border-blue-500/30">
+                BRANCH: FEATURE-PRO-DASHBOARD
+            </div>
+            <button class="text-slate-400 hover:text-white text-sm">用户中心</button>
         </div>
     </nav>
 
-    <div class="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 p-6">
-
-        <!-- Left: 3D Visualizer -->
-        <div class="lg:col-span-8 space-y-6">
-            <div
-                class="glass-panel rounded-[2rem] h-[650px] relative overflow-hidden flex flex-col items-center justify-center p-12">
-                <!-- Status Overlay -->
-                <div class="absolute top-8 left-8 flex gap-4">
-                    <div class="px-4 py-2 rounded-xl bg-slate-800/80 border border-slate-700">
-                        <span class="block text-[10px] text-slate-500 uppercase">当前模式</span>
-                        <span id="currentModeDisplay" class="text-sm font-bold text-blue-400">标准结构预览</span>
+    <div class="flex-grow p-6 grid grid-cols-12 gap-6">
+        
+        <!-- Sidebar: Advanced Metrics -->
+        <div class="col-span-12 lg:col-span-3 space-y-6">
+            <div class="dashboard-card p-6 rounded-2xl">
+                <h3 class="text-xs font-bold text-slate-500 uppercase mb-4 tracking-widest">生产数据实时流</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-end border-b border-slate-800 pb-2">
+                        <span class="text-sm text-slate-400">当前批次号</span>
+                        <span class="mono text-white text-sm">SY-2024-001</span>
                     </div>
-                    <div class="px-4 py-2 rounded-xl bg-slate-800/80 border border-slate-700">
-                        <span class="block text-[10px] text-slate-500 uppercase">耐侯寿命</span>
-                        <span id="lifeDisplay" class="text-sm font-bold text-emerald-400">25+ Years</span>
+                    <div class="flex justify-between items-end border-b border-slate-800 pb-2">
+                        <span class="text-sm text-slate-400">当前锌层厚度</span>
+                        <span class="mono text-white text-sm">120 g/m²</span>
                     </div>
-                </div>
-
-                <!-- 3D Coil Model -->
-                <div id="visualizerScreen"
-                    class="coil-container relative w-[450px] h-[450px] flex items-center justify-center">
-                    <div class="scan-line"></div>
-                    <div class="weather-rain absolute inset-0 rounded-full"></div>
-
-                    <!-- Coil Body -->
-                    <div id="mainCoil"
-                        class="coil-mesh w-96 h-96 rounded-full border-[16px] border-slate-700 flex items-center justify-center texture-zinc relative shadow-[0_0_100px_rgba(0,0,0,0.5)]">
-                        <!-- Reflection -->
-                        <div
-                            class="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none">
-                        </div>
-
-                        <!-- Core -->
-                        <div
-                            class="w-36 h-36 bg-slate-950 rounded-full shadow-inner flex items-center justify-center border-8 border-slate-900">
-                            <div class="w-20 h-20 rounded-full border border-blue-500/20 animate-pulse"></div>
-                        </div>
-                    </div>
-
-                    <!-- Label Annotation -->
-                    <div
-                        class="absolute bottom-4 bg-blue-600/20 border border-blue-500/50 backdrop-blur px-6 py-2 rounded-full text-xs font-mono">
-                        SURFACE: <span id="surfaceType">ZINC-COATED (HOT DIP)</span>
-                    </div>
-                </div>
-
-                <!-- Environment Sim Buttons -->
-                <div class="absolute bottom-8 right-8 flex flex-col gap-3">
-                    <p class="text-[10px] text-slate-500 font-bold uppercase text-right">环境模拟压力测试</p>
-                    <div class="flex gap-3">
-                        <button onclick="toggleWeather('rain', this)"
-                            class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center hover:bg-blue-900/40 transition">🌧️</button>
-                        <button onclick="toggleWeather('sun', this)"
-                            class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center hover:bg-orange-900/40 transition">☀️</button>
-                        <button onclick="toggleWeather('salt', this)"
-                            class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center hover:bg-slate-700 transition">🌊</button>
+                    <div class="flex justify-between items-end border-b border-slate-800 pb-2">
+                        <span class="text-sm text-slate-400">炉内温度</span>
+                        <span class="mono text-emerald-400 text-sm">455°C</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Calculation Summary -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="glass-panel p-6 rounded-3xl border-l-4 border-l-blue-500">
-                    <h3 class="text-xs font-bold text-slate-500 mb-2">预计成品重量</h3>
-                    <div class="flex items-baseline gap-2">
-                        <span id="weightVal" class="text-3xl font-black text-white">7.29</span>
-                        <span class="text-sm text-slate-400">M/T</span>
+            <div class="dashboard-card p-6 rounded-2xl">
+                <h3 class="text-xs font-bold text-slate-500 uppercase mb-4 tracking-widest">环境合规性 (ESG)</h3>
+                <div class="relative pt-1">
+                    <div class="flex mb-2 items-center justify-between text-xs">
+                        <span class="text-slate-400">碳足迹抵消进度</span>
+                        <span class="text-emerald-400 font-bold">88%</span>
+                    </div>
+                    <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-slate-800">
+                        <div style="width:88%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-emerald-500"></div>
                     </div>
                 </div>
-                <div class="glass-panel p-6 rounded-3xl border-l-4 border-l-emerald-500">
-                    <h3 class="text-xs font-bold text-slate-500 mb-2">耐腐蚀等级</h3>
-                    <div class="flex items-baseline gap-2">
-                        <span id="gradeVal" class="text-3xl font-black text-white">RC4</span>
-                        <span class="text-sm text-slate-400">ISO 12944</span>
-                    </div>
-                </div>
-                <div class="glass-panel p-6 rounded-3xl border-l-4 border-l-indigo-500">
-                    <h3 class="text-xs font-bold text-slate-500 mb-2">表面光泽度</h3>
-                    <div class="flex items-baseline gap-2">
-                        <span id="glossVal" class="text-3xl font-black text-white">35%</span>
-                        <span class="text-sm text-slate-400">Semi-Gloss</span>
+                <p class="text-[10px] text-slate-500">该项目已通过 ISO 14067 碳足迹核证。</p>
+            </div>
+
+            <!-- New Calculator Feature: Logisitic Cost -->
+            <div class="dashboard-card p-6 rounded-2xl bg-gradient-to-br from-blue-900/20 to-transparent">
+                <h3 class="text-xs font-bold text-blue-400 uppercase mb-4">物流预估 (Logistics)</h3>
+                <div class="space-y-4">
+                    <select class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-white outline-none">
+                        <option>目的地: 上海港</option>
+                        <option>目的地: 宁波港</option>
+                        <option>目的地: 沭阳内陆仓库</option>
+                    </select>
+                    <div class="p-3 bg-slate-900/50 rounded-lg border border-slate-800">
+                        <div class="text-[10px] text-slate-500">运费估算 (每吨)</div>
+                        <div class="text-lg font-bold text-white">¥125.00</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Right: Control Panel -->
-        <div class="lg:col-span-4 space-y-6">
-            <!-- Coating Architecture Explorer -->
-            <div class="glass-panel rounded-[2rem] p-8">
-                <h2 class="text-lg font-bold mb-6 flex items-center gap-2">
-                    <span class="w-2 h-6 bg-blue-500 rounded-full"></span>
-                    涂层结构配置
-                </h2>
+        <!-- Main Display: Digital Twin -->
+        <div class="col-span-12 lg:col-span-6 space-y-6">
+            <div class="dashboard-card rounded-[2.5rem] h-[550px] relative overflow-hidden flex flex-col items-center justify-center border-2 border-slate-800">
+                <!-- Grid Overlay -->
+                <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#3b82f6 1px, transparent 1px); background-size: 30px 30px;"></div>
+                
+                <div class="text-center mb-8 relative z-10">
+                    <h2 class="text-3xl font-black glow-text tracking-tighter">钢卷数字孪生预览</h2>
+                    <p class="text-xs text-slate-500 mt-2">型号: SY-DX-PRO | 版本: 2.0.4-Stable</p>
+                </div>
 
+                <!-- Pro Coil Visualizer -->
+                <div class="relative w-80 h-80 group">
+                    <div id="coilObject" class="coil-pro w-full h-full rounded-full border-[20px] border-slate-800 flex items-center justify-center transition-all duration-1000 group-hover:rotate-12 group-hover:scale-110 shadow-[0_0_50px_rgba(59,130,246,0.2)]">
+                        <!-- Internal Core -->
+                        <div class="w-32 h-32 bg-slate-950 rounded-full border-8 border-slate-900 flex items-center justify-center">
+                            <div class="w-16 h-16 rounded-full border-2 border-dashed border-blue-500/30 animate-[spin_10s_linear_infinite]"></div>
+                        </div>
+                        <!-- Lens Flare -->
+                        <div class="absolute top-0 left-0 w-full h-full rounded-full bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
+                    </div>
+                </div>
+
+                <!-- Live Metrics Over the Visual -->
+                <div class="absolute bottom-10 flex gap-8">
+                    <div class="text-center">
+                        <div class="text-[10px] text-slate-500 uppercase tracking-widest">表面粗糙度</div>
+                        <div class="text-xl font-bold mono">Ra 0.82</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-[10px] text-slate-500 uppercase tracking-widest">屈服强度</div>
+                        <div class="text-xl font-bold mono text-orange-400">320 MPa</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-[10px] text-slate-500 uppercase tracking-widest">抗拉强度</div>
+                        <div class="text-xl font-bold mono text-blue-400">410 MPa</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Weight & Spec Calc -->
+        <div class="col-span-12 lg:col-span-3 space-y-6">
+            <div class="dashboard-card p-8 rounded-3xl bg-blue-600">
+                <h3 class="text-white/80 text-xs font-bold uppercase mb-6 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    精密计重引擎
+                </h3>
+                
                 <div class="space-y-4">
-                    <!-- Layer 1 -->
-                    <div onclick="selectLayer('base', this)"
-                        class="layer-item p-4 rounded-2xl border border-slate-700 bg-slate-800/50 cursor-pointer transition hover:border-slate-500">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-sm font-bold">1. 冷轧基板 (Full Hard)</span>
-                            <span class="text-[10px] bg-slate-700 px-2 py-0.5 rounded text-slate-400">BASE</span>
-                        </div>
-                        <p class="text-[11px] text-slate-500 leading-relaxed">提供核心机械强度，苏讯采用DC51D+Z级别高强度钢基。</p>
+                    <div>
+                        <label class="block text-[10px] text-white/60 mb-1 uppercase">外径 OD (mm)</label>
+                        <input type="number" id="od" value="1250" oninput="calculate()" class="w-full bg-blue-700 border border-blue-400/30 rounded-xl px-4 py-2 text-white outline-none">
                     </div>
-
-                    <!-- Layer 2 -->
-                    <div onclick="selectLayer('zinc', this)"
-                        class="layer-item p-4 rounded-2xl border border-slate-700 bg-slate-800/50 cursor-pointer transition layer-active">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-sm font-bold">2. 镀锌层 (Z80-Z275)</span>
-                            <span class="text-[10px] bg-blue-900/50 px-2 py-0.5 rounded text-blue-400">ACTIVE</span>
-                        </div>
-                        <p class="text-[11px] text-slate-400 leading-relaxed">阳极牺牲保护。可根据环境选择 80g/㎡ 至 275g/㎡ 锌层厚度。</p>
+                    <div>
+                        <label class="block text-[10px] text-white/60 mb-1 uppercase">宽度 W (mm)</label>
+                        <input type="number" id="width" value="1219" oninput="calculate()" class="w-full bg-blue-700 border border-blue-400/30 rounded-xl px-4 py-2 text-white outline-none">
                     </div>
+                </div>
 
-                    <!-- Layer 3 -->
-                    <div onclick="selectLayer('hdp', this)"
-                        class="layer-item p-4 rounded-2xl border border-slate-700 bg-slate-800/50 cursor-pointer transition hover:border-slate-500">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-sm font-bold">3. 高耐候聚酯 (HDP)</span>
-                            <span class="text-[10px] bg-slate-700 px-2 py-0.5 rounded text-slate-400">COATING</span>
-                        </div>
-                        <p class="text-[11px] text-slate-500 leading-relaxed">高性能底漆+面漆组合，专门针对工业酸雨环境设计。</p>
-                    </div>
-
-                    <!-- Layer 4 -->
-                    <div onclick="selectLayer('pvdf', this)"
-                        class="layer-item p-4 rounded-2xl border border-slate-700 bg-slate-800/50 cursor-pointer transition hover:border-slate-500">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-sm font-bold">4. 氟碳涂层 (PVDF)</span>
-                            <span class="text-[10px] bg-slate-700 px-2 py-0.5 rounded text-slate-400">PREMIUM</span>
-                        </div>
-                        <p class="text-[11px] text-slate-500 leading-relaxed">含 70% 氟碳树脂。顶级抗紫外线性能，适用于沿海地区。</p>
+                <div class="mt-10 text-center">
+                    <div class="text-white/50 text-xs italic mb-1">总重量预估</div>
+                    <div class="text-5xl font-black text-white italic tracking-tighter">
+                        <span id="result">9.86</span> <span class="text-xl not-italic">t</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Parameters -->
-            <div class="glass-panel rounded-[2rem] p-8">
-                <h2 class="text-lg font-bold mb-6 flex items-center gap-2">
-                    <span class="w-2 h-6 bg-emerald-500 rounded-full"></span>
-                    规格参数计算
-                </h2>
-                <div class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-[10px] text-slate-500 mb-1 uppercase tracking-wider">外径
-                                (mm)</label>
-                            <input type="number" id="od" value="1200" oninput="updateStats()"
-                                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white focus:border-blue-500 outline-none transition">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] text-slate-500 mb-1 uppercase tracking-wider">内径
-                                (mm)</label>
-                            <input type="number" id="id" value="508" oninput="updateStats()"
-                                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white focus:border-blue-500 outline-none transition">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] text-slate-500 mb-1 uppercase tracking-wider">宽度 (mm)</label>
-                        <input type="number" id="width" value="1000" oninput="updateStats()"
-                            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white focus:border-blue-500 outline-none transition">
-                    </div>
-                </div>
-                <button
-                    class="w-full mt-6 bg-slate-800 border border-slate-700 py-3 rounded-2xl text-xs font-bold hover:bg-slate-700 transition">下载技术规格书
-                    (PDF)</button>
+            <!-- Quick Actions -->
+            <div class="space-y-3">
+                <button class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 py-4 rounded-2xl flex items-center justify-center gap-3 transition">
+                    <span class="text-blue-400">📄</span>
+                    <span class="text-xs font-bold uppercase">导出质保书 (MTC)</span>
+                </button>
+                <button class="w-full bg-white hover:bg-slate-100 py-4 rounded-2xl flex items-center justify-center gap-3 transition text-slate-900">
+                    <span class="text-sm font-bold uppercase">提交订单询价</span>
+                </button>
             </div>
         </div>
     </div>
 
+    <footer class="p-6 border-t border-slate-900 text-center">
+        <p class="text-[10px] text-slate-600 mono uppercase tracking-[0.4em]">PRO VERSION DEPLOYED BY SUXUN NEW MATERIALS DIGITAL LAB</p>
+    </footer>
+
     <script>
-        let currentCoating = 'zinc';
-        let weatherState = { rain: false, sun: false, salt: false };
-
-        function selectLayer(layer, el) {
-            // UI classes
-            document.querySelectorAll('.layer-item').forEach(item => {
-                item.classList.remove('layer-active');
-                item.querySelector('p').classList.replace('text-slate-400', 'text-slate-500');
-            });
-            el.classList.add('layer-active');
-            el.querySelector('p').classList.replace('text-slate-500', 'text-slate-400');
-
-            // 3D Update
-            const coil = document.getElementById('mainCoil');
-            const display = document.getElementById('surfaceType');
-            const mode = document.getElementById('currentModeDisplay');
-
-            coil.classList.remove('texture-base', 'texture-zinc', 'texture-hdp', 'texture-pvdf');
-            coil.classList.add('texture-' + layer);
-
-            currentCoating = layer;
-
-            // Visual properties update
-            switch (layer) {
-                case 'base':
-                    display.innerText = "CR COIL (FULL HARD)";
-                    mode.innerText = "基板状态";
-                    document.getElementById('lifeDisplay').innerText = "1-2 Years";
-                    document.getElementById('gradeVal').innerText = "RC1";
-                    document.getElementById('glossVal').innerText = "15%";
-                    break;
-                case 'zinc':
-                    display.innerText = "ZINC-COATED (HOT DIP)";
-                    mode.innerText = "镀锌结构";
-                    document.getElementById('lifeDisplay').innerText = "20+ Years";
-                    document.getElementById('gradeVal').innerText = "RC3";
-                    document.getElementById('glossVal').innerText = "40%";
-                    break;
-                case 'hdp':
-                    display.innerText = "HIGH DURABLE POLYESTER";
-                    mode.innerText = "彩涂结构 (HDP)";
-                    document.getElementById('lifeDisplay').innerText = "15-20 Years";
-                    document.getElementById('gradeVal').innerText = "RC4";
-                    document.getElementById('glossVal').innerText = "35%";
-                    break;
-                case 'pvdf':
-                    display.innerText = "70% KYNAR 500 PVDF";
-                    mode.innerText = "顶级氟碳结构";
-                    document.getElementById('lifeDisplay').innerText = "25+ Years";
-                    document.getElementById('gradeVal').innerText = "RC5";
-                    document.getElementById('glossVal').innerText = "25%";
-                    break;
-            }
-
-            // Animation kick
-            coil.style.transform = 'rotateY(20deg) scale(1.05)';
-            setTimeout(() => coil.style.transform = 'rotateY(0deg) scale(1)', 300);
-        }
-
-        function toggleWeather(type, btn) {
-            const screen = document.getElementById('visualizerScreen');
-            const coil = document.getElementById('mainCoil');
-
-            weatherState[type] = !weatherState[type];
-
-            if (weatherState[type]) {
-                btn.classList.add('bg-blue-600', 'border-blue-400');
-                screen.classList.add('active-weather');
-
-                // Add visual filter to coil
-                if (type === 'rain') coil.style.filter = 'brightness(0.7) contrast(1.2)';
-                if (type === 'sun') coil.style.filter = 'brightness(1.5) saturate(1.2)';
-                if (type === 'salt') coil.style.filter = 'sepia(0.3) contrast(0.8)';
-            } else {
-                btn.classList.remove('bg-blue-600', 'border-blue-400');
-                if (!Object.values(weatherState).some(v => v)) {
-                    screen.classList.remove('active-weather');
-                    coil.style.filter = 'none';
-                }
-            }
-
-            updateStats();
-        }
-
-        function updateStats() {
+        function calculate() {
             const od = parseFloat(document.getElementById('od').value) || 0;
-            const id = parseFloat(document.getElementById('id').value) || 0;
             const width = parseFloat(document.getElementById('width').value) || 0;
-
-            if (od > id) {
+            const id = 508; // Standard ID
+            
+            if(od > id) {
                 const R = od / 20;
                 const r = id / 20;
                 const W = width / 10;
-                const volume = Math.PI * (Math.pow(R, 2) - Math.pow(r, 2)) * W;
-                const weight = (volume * 7.85) / 1000000;
-                document.getElementById('weightVal').innerText = weight.toFixed(2);
+                const weight = (Math.PI * (R*R - r*r) * W * 7.85) / 1000000;
+                document.getElementById('result').innerText = weight.toFixed(2);
+                
+                // Scale visual
+                const scale = Math.min(Math.max(od / 1200, 0.7), 1.2);
+                document.getElementById('coilObject').style.transform = `scale(${scale})`;
             }
-
-            // Update scale based on OD
-            const scale = Math.min(Math.max(od / 1200, 0.6), 1.15);
-            document.getElementById('mainCoil').style.width = (scale * 384) + 'px';
-            document.getElementById('mainCoil').style.height = (scale * 384) + 'px';
         }
+        window.onload = calculate;
+    </script>
+</body>
+</html>
 
         window.onload = updateStats;
     </script>
